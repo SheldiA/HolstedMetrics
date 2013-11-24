@@ -13,9 +13,11 @@ namespace Holsted
         private ListStatementsAndOperands listStatementsAndOperands;
 
         private char[] endLineCode = { ';', '{', '}','(',')','[',']'};
+        private string[] signStatement = { "=","==","!=",">","<",">=","<=","<>","!","++","--","+","-","*","/"};
         //Regex dataDeclarationRegex = new Regex(@"^\b\w+\b(\s+\b\w+\b){1,}(;|{|})$");
         Regex dataDeclarationRegex = new Regex(@"\b\w+\b(\s+\b\w+\b){1,}");
-        Regex digitalConst = new Regex(@"\b\d+\b");
+        Regex digitalConstRegex = new Regex(@"\b\d+\b");
+        Regex variableRegex = new Regex(@"\b\w+\b");
 
         public Holsted(string file)
         {
@@ -67,19 +69,53 @@ namespace Holsted
                    variable += temp[i];
                listStatementsAndOperands.AddOperand(variable, true);
            }
-
-           Match matchDigitalConst = digitalConst.Match(str);
-           if (matchDigitalConst.Success)
+           else
            {
-               //в идеале получить значение между пробелами
-               listStatementsAndOperands.AddConst(matchDigitalConst.Value);
+               Match matchDigitalConst = digitalConstRegex.Match(str);
+               if (matchDigitalConst.Success)
+               {
+                   //в идеале получить значение между пробелами
+                   listStatementsAndOperands.AddConst(matchDigitalConst.Value);
+               }
+               else
+               {
+                   Match matchVariable = variableRegex.Match(str);
+                   if (matchVariable.Success)
+                       listStatementsAndOperands.AddOperand(matchVariable.Value, false);
+               }
            }
+        }
+
+        private int CheckIsSign(int pos)
+        {
+            int result = -1;
+            bool isEqual;
+            for (int i = 0; i < signStatement.Length; ++i)
+            {
+                if ((pos + signStatement[i].Length - 1) < file.Length)
+                {
+                    isEqual = true;
+                    for (int j = 0; j < signStatement[i].Length; ++j)
+                    {
+                        if (file[pos + j] != signStatement[i][j])
+                            isEqual = false;
+                    }
+                    if (isEqual)
+                    {
+                        result = i;
+                        break;
+                    }
+                }
+            }
+
+            return result;
         }
 
         public string Calculate()
         {
             string result = "";
             string codeLine = "";
+            int temp;
 
             for (int i = 0; i < file.Length; ++i)
             {
@@ -92,15 +128,25 @@ namespace Holsted
                         i = HandlingStringConst(i);
                         break;
                     default:
-                        if (endLineCode.Contains(file[i]))
+                        if (endLineCode.Contains(file[i]) )
                         {
-                            ParseCodeLine(codeLine);
+                            if(codeLine != "")
+                                ParseCodeLine(codeLine);
                             codeLine = "";
                             listStatementsAndOperands.AddStatement(file[i].ToString());
                         }
                         else
-                            if ((file[i] != '\n') && (file[i] != '\r'))
-                                codeLine += file[i];
+                            if ((temp = CheckIsSign(i)) > -1)
+                            {
+                                if (codeLine != "")
+                                    ParseCodeLine(codeLine);
+                                codeLine = "";
+                                listStatementsAndOperands.AddStatement(signStatement[temp]);
+                                i += (signStatement[temp].Length - 1);
+                            }
+                            else
+                                if ((file[i] != '\n') && (file[i] != '\r'))
+                                    codeLine += file[i];
                         break;
                 }                        
             }

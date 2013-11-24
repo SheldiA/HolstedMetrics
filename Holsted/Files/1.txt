@@ -1,8 +1,8 @@
 Random random = new Random();
-int border = random.nextInt(50);
-int value;
+int border1 = random.nextInt(50);
+in_t value;
 private char c;
-float f{
+float f;
 for(int i = 0; i < border;++i)
 {
 	value = random.nextInt(100);
