@@ -31,7 +31,7 @@ namespace Holsted
         {
             statementsName = new List<string>();
             operandsName = new List<string>();
-            statementsCount = new List<int>();
+            statementsCount = new List<int>();//while -= do else не выводить
             operandsCount = new List<int>();
             constsName = new List<string>();
             constsCount = new List<int>();

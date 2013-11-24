@@ -13,11 +13,13 @@ namespace Holsted
         private ListStatementsAndOperands listStatementsAndOperands;
 
         private char[] endLineCode = { ';', '{', '}','(',')','[',']'};
-        private string[] signStatement = { "=","==","!=",">","<",">=","<=","<>","!","++","--","+","-","*","/"};
+        private string[] signStatement = { "=","==","!=",">","<",">=","<=","<>","!","++","--","+","-","*","/","%","+=","-=","*=","/=","%=","&&","||","&","|","<<",">>","^","&=","|=","^=","<<=",">>=",">>>=","?",":"};
+        private string[] conditionalStatements = { "if","else","while","do","for"};
         //Regex dataDeclarationRegex = new Regex(@"^\b\w+\b(\s+\b\w+\b){1,}(;|{|})$");
         Regex dataDeclarationRegex = new Regex(@"\b\w+\b(\s+\b\w+\b){1,}");
         Regex digitalConstRegex = new Regex(@"\b\d+\b");
         Regex variableRegex = new Regex(@"\b\w+\b");
+        Regex conditionalStatementRegex = new Regex(@"\b(while|if|else|for|do)\b");
 
         public Holsted(string file)
         {
@@ -60,30 +62,33 @@ namespace Holsted
 
         private void ParseCodeLine(string str)
         {
-           Match matchDeclaration = dataDeclarationRegex.Match(str);
-           if (matchDeclaration.Success)
-           {
-               string temp = matchDeclaration.Value;
-               string variable = "";
-               for (int i = temp.LastIndexOf(' ') + 1; i < temp.Length; ++i)
-                   variable += temp[i];
-               listStatementsAndOperands.AddOperand(variable, true);
-           }
-           else
-           {
-               Match matchDigitalConst = digitalConstRegex.Match(str);
-               if (matchDigitalConst.Success)
-               {
-                   //в идеале получить значение между пробелами
-                   listStatementsAndOperands.AddConst(matchDigitalConst.Value);
-               }
-               else
-               {
-                   Match matchVariable = variableRegex.Match(str);
-                   if (matchVariable.Success)
-                       listStatementsAndOperands.AddOperand(matchVariable.Value, false);
-               }
-           }
+            if (!CheckConditionalStatements(str))
+            {
+                Match matchDeclaration = dataDeclarationRegex.Match(str);
+                if (matchDeclaration.Success)
+                {
+                    string temp = matchDeclaration.Value;
+                    string variable = "";
+                    for (int i = temp.LastIndexOf(' ') + 1; i < temp.Length; ++i)
+                        variable += temp[i];
+                    listStatementsAndOperands.AddOperand(variable, true);
+                }
+                else
+                {
+                    Match matchDigitalConst = digitalConstRegex.Match(str);
+                    if (matchDigitalConst.Success)
+                    {
+                        //в идеале получить значение между пробелами
+                        listStatementsAndOperands.AddConst(matchDigitalConst.Value);
+                    }
+                    else
+                    {
+                        Match matchVariable = variableRegex.Match(str);
+                        if (matchVariable.Success)
+                            listStatementsAndOperands.AddOperand(matchVariable.Value, false);
+                    }
+                }
+            }
         }
 
         private int CheckIsSign(int pos)
@@ -106,6 +111,24 @@ namespace Holsted
                         break;
                     }
                 }
+            }
+
+            return result;
+        }
+
+        private bool CheckConditionalStatements(string str)
+        {
+            bool result = false;
+
+            if (conditionalStatementRegex.IsMatch(str))
+            {
+                for (int i = 0; i < conditionalStatements.Length; ++i)
+                    if (str.Contains(conditionalStatements[i]))
+                    {
+                        result = true;
+                        listStatementsAndOperands.AddStatement(conditionalStatements[i]);
+                        break;
+                    }
             }
 
             return result;
