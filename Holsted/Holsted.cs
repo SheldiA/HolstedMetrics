@@ -12,9 +12,10 @@ namespace Holsted
         private string file;
         private ListStatementsAndOperands listStatementsAndOperands;
 
-        private char[] endLineCode = { ';', '{', '}' };
+        private char[] endLineCode = { ';', '{', '}','(',')','[',']'};
         //Regex dataDeclarationRegex = new Regex(@"^\b\w+\b(\s+\b\w+\b){1,}(;|{|})$");
         Regex dataDeclarationRegex = new Regex(@"\b\w+\b(\s+\b\w+\b){1,}");
+        Regex digitalConst = new Regex(@"\b\d+\b");
 
         public Holsted(string file)
         {
@@ -57,14 +58,21 @@ namespace Holsted
 
         private void ParseCodeLine(string str)
         {
-           Match match = dataDeclarationRegex.Match(str);
-           if (match.Success)
+           Match matchDeclaration = dataDeclarationRegex.Match(str);
+           if (matchDeclaration.Success)
            {
-               string temp = match.Value;
+               string temp = matchDeclaration.Value;
                string variable = "";
                for (int i = temp.LastIndexOf(' ') + 1; i < temp.Length; ++i)
                    variable += temp[i];
                listStatementsAndOperands.AddOperand(variable, true);
+           }
+
+           Match matchDigitalConst = digitalConst.Match(str);
+           if (matchDigitalConst.Success)
+           {
+               //в идеале получить значение между пробелами
+               listStatementsAndOperands.AddConst(matchDigitalConst.Value);
            }
         }
 
