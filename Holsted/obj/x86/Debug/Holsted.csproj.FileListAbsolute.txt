@@ -1,0 +1,7 @@
+D:\Project c#\Holsted\Holsted\bin\Debug\Holsted.exe
+D:\Project c#\Holsted\Holsted\bin\Debug\Holsted.pdb
+D:\Project c#\Holsted\Holsted\obj\x86\Debug\Holsted.FormMain.resources
+D:\Project c#\Holsted\Holsted\obj\x86\Debug\Holsted.Properties.Resources.resources
+D:\Project c#\Holsted\Holsted\obj\x86\Debug\Holsted.csproj.GenerateResource.Cache
+D:\Project c#\Holsted\Holsted\obj\x86\Debug\Holsted.exe
+D:\Project c#\Holsted\Holsted\obj\x86\Debug\Holsted.pdb
