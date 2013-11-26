@@ -1,9 +1,11 @@
 Random random = new Random();
-int border1 = random.nextInt(50);
-in_t value;
+int value;
+value = kol();
+int border = random.nextInt(50);
+int arr[];
 private char c;
 float f;
-for(int i = 0; i < border;++i)
+ for(int i = 0; i < border;++i) 
 {
 	value = random.nextInt(100);
 	System.out.print("Random value = " + value);

@@ -5,3 +5,4 @@ D:\Project c#\Holsted\Holsted\obj\x86\Debug\Holsted.Properties.Resources.resourc
 D:\Project c#\Holsted\Holsted\obj\x86\Debug\Holsted.csproj.GenerateResource.Cache
 D:\Project c#\Holsted\Holsted\obj\x86\Debug\Holsted.exe
 D:\Project c#\Holsted\Holsted\obj\x86\Debug\Holsted.pdb
+D:\Project c#\Holsted\Holsted\obj\x86\Debug\Holsted.csprojResolveAssemblyReference.cache

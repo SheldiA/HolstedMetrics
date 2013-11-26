@@ -7,20 +7,9 @@ namespace Holsted
 {
     class ListStatementsAndOperands
     {
-        struct Item
-        {
-            string name;
-            int count;
-            public Item(string str)
-            {
-                name = str;
-                count = 0;
-            }
-        };
-
         private List<string> statementsName;
         private List<int> statementsCount;
-        private List<string> operandsName;
+        public List<string> operandsName;
         private List<int> operandsCount;
         private List<string> constsName;
         private List<int> constsCount;
@@ -65,6 +54,48 @@ namespace Holsted
         public void AddConst(string constant)
         {
             AddElement(constsName, constsCount, constant);
+        }
+
+        public int GetUniqueStatementCount()
+        {
+            int result = 0;
+            for (int i = 0; i < statementsName.Count; ++i)
+                if (statementsName[i] != "}" && statementsName[i] != ")" && statementsName[i] != "]")
+                    ++result;
+            return result;
+        }
+
+        public int GetUniqueOperandsCount()
+        {
+            return (numberUniqueOperands + constsName.Count);
+        }
+
+        public int StatCount(string stat)
+        {
+            int i = statementsName.IndexOf(stat);
+            if (i > -1)
+                return statementsCount[i];
+            else
+                return 0;
+        }
+
+        public int GetStatesmentCount()
+        {
+            int result = 0;
+
+            result = statementsCount.Sum();
+            result -= StatCount("do");
+            result -= StatCount("}");
+            result -= StatCount(")");
+            result -= StatCount("]");
+            result -= StatCount("else");
+            return result;
+        }
+
+        public int GetOperandsCount()
+        {
+            return (operandsCount.Sum() + constsCount.Sum());
+            
         }
     }
 }

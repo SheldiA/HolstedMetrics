@@ -1,0 +1,27 @@
+    int a[];
+    int key;    
+    int low = 0;
+    int high = a.length - 1;
+while(a<b)
+{
+++a;
+}
+    while (low <= high)
+    { 
+        if (midVal < key && mid > 5)
+        {
+            low = mid + 1;
+         }
+        else 
+        {
+            if (midVal > key)
+            {
+                high = mid - 1;
+             }
+            else
+            {
+                return mid; // key found
+            }
+         }
+    }
+    return -(low + 1); 

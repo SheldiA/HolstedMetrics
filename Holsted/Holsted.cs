@@ -6,24 +6,23 @@ using System.Text.RegularExpressions;
 
 namespace Holsted
 {
-    class Holsted
+    class Holsted : IMetric
     {
         
         private string file;
         private ListStatementsAndOperands listStatementsAndOperands;
 
         private char[] endLineCode = { ';', '{', '}','(',')','[',']'};
-        private string[] signStatement = { "=","==","!=",">","<",">=","<=","<>","!","++","--","+","-","*","/","%","+=","-=","*=","/=","%=","&&","||","&","|","<<",">>","^","&=","|=","^=","<<=",">>=",">>>=","?",":"};
-        private string[] conditionalStatements = { "if","else","while","do","for"};
+        private string[] signStatement = { ">=", ">>>=", "<=", "<>", "!", "==", "=", "!=", "<<=", ">>=", "<<", ">>", ">", "<", "++", "--", "+=", "-=", "*=", "/=", "%=", "+", "-", "*", "/", "%", "&&", "||", "&=", "|=", "^=", "&", "|", "^"};
+        private string[] keyWords = { "if","else","while","do","for","new","break","continue","goto","return","switch","case"};//case return отдельно??
         //Regex dataDeclarationRegex = new Regex(@"^\b\w+\b(\s+\b\w+\b){1,}(;|{|})$");
-        Regex dataDeclarationRegex = new Regex(@"\b\w+\b(\s+\b\w+\b){1,}");
+        Regex dataDeclarationRegex = new Regex(@"\s*\b\w+\b(\s+\b\w+\b){1,}");
         Regex digitalConstRegex = new Regex(@"\b\d+\b");
         Regex variableRegex = new Regex(@"\b\w+\b");
-        Regex conditionalStatementRegex = new Regex(@"\b(while|if|else|for|do)\b");
+        
 
-        public Holsted(string file)
-        {
-            this.file = file;
+        public Holsted()
+        {            
             listStatementsAndOperands = new ListStatementsAndOperands();
         }
         //return position to end / of comments
@@ -31,7 +30,10 @@ namespace Holsted
         {
             ++pos;
             if ((file[pos] != '*') && (file[pos] != '/'))
+            {
+                listStatementsAndOperands.AddStatement("/");
                 return pos - 1;
+            }
             ++pos;
             for (; pos < (file.Length - 1); ++pos)
                 if (file[pos] == '\n')
@@ -60,32 +62,68 @@ namespace Holsted
             return pos;
         }
 
+        private string RemoveConst(string str,string constant)
+        {
+            int pos = str.IndexOf(constant);
+            int i = pos;
+            while (str[i] != ',')
+                --i;
+            str = str.Remove(i,constant.Length + (pos - i));
+
+            return str;
+        }
+
         private void ParseCodeLine(string str)
         {
-            if (!CheckConditionalStatements(str))
+            bool isNotConstAndVar = false;
+            if (!CheckKeyWords(str))
             {
-                Match matchDeclaration = dataDeclarationRegex.Match(str);
-                if (matchDeclaration.Success)
+                Match matchDigitalConst = digitalConstRegex.Match(str);
+                while (matchDigitalConst.Success)
                 {
-                    string temp = matchDeclaration.Value;
-                    string variable = "";
-                    for (int i = temp.LastIndexOf(' ') + 1; i < temp.Length; ++i)
-                        variable += temp[i];
-                    listStatementsAndOperands.AddOperand(variable, true);
-                }
-                else
-                {
-                    Match matchDigitalConst = digitalConstRegex.Match(str);
-                    if (matchDigitalConst.Success)
+                    listStatementsAndOperands.AddConst(matchDigitalConst.Value);
+                    if (str.IndexOf(',') > -1)
                     {
-                        //в идеале получить значение между пробелами
-                        listStatementsAndOperands.AddConst(matchDigitalConst.Value);
+                        str = RemoveConst(str, matchDigitalConst.Value);
+                        isNotConstAndVar = false;
+                    }
+                    else
+                        isNotConstAndVar = true;
+                    matchDigitalConst = matchDigitalConst.NextMatch();
+                }
+
+                if (!isNotConstAndVar)
+                {
+                    Match matchDeclaration = dataDeclarationRegex.Match(str);
+                    if (matchDeclaration.Success)
+                    {
+                        int position = 0;
+                        if ((position = str.IndexOf(',')) > -1)
+                        {
+                            int i = position;
+                            while ((i >= 0) && !((str[i] == ' ') && ((position - i) > 1)))
+                                --i;
+                            position = i;
+                        }
+                        else
+                            position = matchDeclaration.Value.LastIndexOf(' ');
+                        str = str.Substring(position);
+                        Match matchVariable = variableRegex.Match(str);
+                        while (matchVariable.Success)
+                        {
+                            listStatementsAndOperands.AddOperand(matchVariable.Value, true);
+                            matchVariable = matchVariable.NextMatch();
+                        }
                     }
                     else
                     {
                         Match matchVariable = variableRegex.Match(str);
-                        if (matchVariable.Success)
-                            listStatementsAndOperands.AddOperand(matchVariable.Value, false);
+                        while (matchVariable.Success)
+                        {
+                            if (listStatementsAndOperands.operandsName.Contains(matchVariable.Value))
+                                listStatementsAndOperands.AddOperand(matchVariable.Value, false);
+                            matchVariable = matchVariable.NextMatch();
+                        }
                     }
                 }
             }
@@ -116,29 +154,33 @@ namespace Holsted
             return result;
         }
 
-        private bool CheckConditionalStatements(string str)
+        private bool CheckKeyWords(string str)
         {
             bool result = false;
-
-            if (conditionalStatementRegex.IsMatch(str))
+            string keyWordsPattern = "";
+            Regex keyWordRegex;
+            for (int i = 0; i < keyWords.Length; ++i)
             {
-                for (int i = 0; i < conditionalStatements.Length; ++i)
-                    if (str.Contains(conditionalStatements[i]))
-                    {
-                        result = true;
-                        listStatementsAndOperands.AddStatement(conditionalStatements[i]);
-                        break;
-                    }
+                keyWordsPattern = @"\b" + keyWords[i] +"\\b";
+                keyWordRegex = new Regex(keyWordsPattern);
+                if (keyWordRegex.IsMatch(str))
+                {
+                    result = true;
+                    listStatementsAndOperands.AddStatement(keyWords[i]);
+                    break;
+                }
             }
 
             return result;
         }
 
-        public string Calculate()
+        public string Calculate(string file)
         {
             string result = "";
             string codeLine = "";
             int temp;
+
+            this.file = file;
 
             for (int i = 0; i < file.Length; ++i)
             {
@@ -149,6 +191,10 @@ namespace Holsted
                         break;
                     case '"':
                         i = HandlingStringConst(i);
+                        break;
+                    case '.':
+                        codeLine = "";
+                        listStatementsAndOperands.AddStatement(".");
                         break;
                     default:
                         if (endLineCode.Contains(file[i]) )
@@ -174,7 +220,26 @@ namespace Holsted
                 }                        
             }
 
+            double uniqueStat = listStatementsAndOperands.GetUniqueStatementCount();
+            double uniqueOper = listStatementsAndOperands.GetUniqueOperandsCount();
+            double allStat = listStatementsAndOperands.GetStatesmentCount();
+            double allOper = listStatementsAndOperands.GetOperandsCount();
+            double n = uniqueStat + uniqueOper;
+            double N = allOper + allStat;
+            double V = N * Math.Log10(n) / Math.Log10(2);
+            double Nn = uniqueStat * Math.Log10(uniqueStat) / Math.Log10(2) + uniqueOper * Math.Log10(uniqueOper) / Math.Log10(2);
+            double Ll = 2 * uniqueOper / (uniqueStat * allOper) ;
+            result += "Число уникальных операторов проограммы = " +  Math.Round(uniqueStat,3) + " \n";
+            result += "Число уникальных операндов проограммы = " + Math.Round(uniqueOper,3) + " \n";
+            result += "Словарь программы n = " + Math.Round(n,3) + "\n";
+            result += "Общее число операторов в программе = " + Math.Round(allStat,3) + "\n";
+            result += "Общее число операндов в программе = " + Math.Round(allOper,3) + "\n";
+            result += "Длина программы N = " + Math.Round(N,3) + "\n";
+            result += "Теоретическая длина программы N' = " + Math.Round(Nn,3) + "\n";
+            result += "Объём программы V = " + Math.Round(V,3) + "\n";
+            result += "Уровень качества программирования L' = " + Math.Round(Ll,3) + "\n";
             return result;
         }
+
     }
 }
